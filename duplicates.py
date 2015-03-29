@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 import os, hashlib, sys, argparse
-
 from collections import defaultdict
+'''Searches and finds a list of files which are duplicates in content (but not necessarily filename) in user specified directories.'''
+
+'''Options I'd like to add:
+   - Finer control over descending into subdirs, symlinks
+   - Printing options: compact printing (1 set of duplicates per line, useful for sort) vs pretty printing (one file per line, for example
+   - Figure out if we can increase performance -- still slowish on big dirs'''
 
 
 def main():
     parser = _make_parser()
     args = parser.parse_args()
-    output = _check_output(args.output_filename) #Want to run this before find_duplicates because 
-                                                 #user can cancel if s/he would overwrite something important
-    h=find_duplicates(args.input_dirs, args.verbose)
+    output = _check_output(args.output_filename)     #Want to call _check_output() before find_duplicates() because 
+    h=find_duplicates(args.input_dirs, args.verbose) #user can cancel in _check_output() if s/he would overwrite something important
     output_duplicates(h, output, args.verbose)
-    #output.close() #Not strictly necessary
    
 
 def find_duplicates(base_paths, verbose=False) :
@@ -83,6 +86,7 @@ def _purge(search_map) :
         del search_map[n]
     return search_map
 
+
 def _make_parser() :
     '''Command line parser'''
     parser = argparse.ArgumentParser(description="Searches directory and its subdirectories for files with duplicate contents, optionally writing out duplicates to either a text file or stdout")
@@ -90,7 +94,6 @@ def _make_parser() :
     parser.add_argument("input_dirs", nargs='+', help='Input directories to be search, separated by whitespace.  Note that subdirectories are searched')
     parser.add_argument('-v', '--verbose', help='Increase verbosity', action='store_true', default=False)
     return parser
-
 
 
 def output_duplicates(hashmap, output=sys.stdout, verbose=False) :
@@ -101,6 +104,7 @@ def output_duplicates(hashmap, output=sys.stdout, verbose=False) :
     print("\nFound {} unique files with at least 1 duplicate.".format(len(hashmap)))
     if not output is sys.stdout :
         print("It may be helpful to run 'sort {} > some_new_output.txt' ".format(output.name))
+
 
 def _printer(d, out) :
         for (k, v) in d.items() :
