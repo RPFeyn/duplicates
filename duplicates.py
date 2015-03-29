@@ -2,17 +2,18 @@
 import os, hashlib, sys
 import argparse
 
-
 def main():
     parser = _make_parser()
     args = parser.parse_args()
     output = _check_output(args.output_filename)
     h=md5hash_dict(args.input_dirs, args.verbose)
     output_duplicates(h, output, args.verbose)
-    output.close()
+    #output.close()
    
+
 def md5hash_dict(base_paths, verbose=False) :
     '''Builds a dict mapping the md5 hash of files in path (recursively searched) to filenames of duplicates'''
+    #TODO: Speed this up massively.  Maybe try using os.stat to build dictionary of files with same size, then compare md5 hashes of files within size classes. Reading input takes a huge % of time, with md5hash not far behind.
     if not _check_paths(base_paths) :
         exit(1)
     if verbose :
