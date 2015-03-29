@@ -17,8 +17,6 @@ def md5hash_dict(base_paths, verbose=False) :
     '''Builds a dict mapping the md5 hash of files in path (recursively searched) to filenames of duplicates'''
     if not _check_paths(base_paths) :
         exit(1)
-    if verbose :
-        print("Comparing filesizes to determine candidate duplicates")
     sizemap = _build_size_dict(base_paths, verbose)
     if verbose :
         print("Building md5 hashes of files (this may take a while)")
@@ -41,14 +39,18 @@ def _build_size_dict(base_paths, verbose=False) :
     #NOTE: Assumes paths have already been checked by _check_paths.  In normal operation this has been done in md5hash_dict
     #TODO: Change above behavior? Probably need to refactor
     sizemap=defaultdict(list)
+    if verbose :
+        print("Creating candidates for duplicates based on filesize")
     for base_path in base_paths :
         for (dirpath, dirnames, filenames) in os.walk(base_path) :
-            if verbose :
-                print("Checking sizes in directory ", dirpath)
             for filename in filenames :
                 fullname = os.path.join(dirpath, filename)
                 #TODO: Figure out how getsize can fail, say, on /dev/sr0 or /dev/null, or symlinks
-                sz = os.path.getsize(fullname)
+                try:
+                    sz = os.path.getsize(fullname)
+                except OSError:
+                    print("Skipping file: couldn't get filesize of {}".format(fullname))
+                    continue
                 if sz > 0 :
                     sizemap[sz].append(fullname)
     to_delete=set()
