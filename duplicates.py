@@ -3,7 +3,6 @@ import os, hashlib, sys
 import argparse
 from collections import defaultdict
 
-#TODO: Build paths iterator to avoid duplicating for base_path in baes_paths: for (dirpath, dirnames, filenames) in os.walk(base_path) : etc
 #TODO: Refactor main algorithm so functions are more single purpose
 def main():
     parser = _make_parser()
@@ -78,8 +77,9 @@ def output_duplicates(hashmap, output=sys.stdout, verbose=False) :
             print('Duplicates: ', v, file=output)
             if not output is sys.stdout and verbose :
                 print('Duplicates: ', v, file=sys.stdout)
-    print("\nFound {} unique files with at least 1 duplicate".format(count))
-
+    print("\nFound {} unique files with at least 1 duplicate.".format(count))
+    if not output is sys.stdout :
+        print("On a unix-like system, it may be helpful to run 'sort {} > some_new_output.txt'".format(output.name))
 
 
 def _check_paths(paths) :
