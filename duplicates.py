@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-import os, hashlib, sys
-import argparse
+import os, hashlib, sys, argparse
+
 from collections import defaultdict
 
 
@@ -37,6 +37,7 @@ def _md5hash_dict(sizemap, verbose=False) :
             except OSError:
                 print("Warning: Can't open {}".format(os.path.abspath(fullname)), file=sys.stderr)
                 continue #Just skip files we can't open
+    hashmap=_purge(hashmap)
     return hashmap
 
 
@@ -92,14 +93,11 @@ def _make_parser() :
 
 def output_duplicates(hashmap, output=sys.stdout, verbose=False) :
     '''Simple printer function that takes a dict {search_criteria : [files]}, and prints the files which have duplicates.  If verbose, will print duplicates to both stdout and the output file, if they're different.'''
-    count = 0
     for (k, v) in hashmap.items() :
-        if len(v) > 1 :
-            count += 1
-            print('Duplicates: ', v, file=output)
-            if not output is sys.stdout and verbose :
-                print('Duplicates: ', v, file=sys.stdout)
-    print("\nFound {} unique files with at least 1 duplicate.".format(count))
+        print('Duplicates: ', v, file=output)
+        if not output is sys.stdout and verbose :
+            print('Duplicates: ', v, file=sys.stdout)
+    print("\nFound {} unique files with at least 1 duplicate.".format(len(hashmap)))
     if not output is sys.stdout :
         print("On a unix-like system, it may be helpful to run 'sort {} > some_new_output.txt'".format(output.name))
 
