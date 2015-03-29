@@ -72,11 +72,13 @@ def _build_size_dict(base_paths, verbose=False) :
 
 def _purge(search_map) :
     '''Takes a dict {search criterion : [filelist]} and removes (k,v) pairs with len(v) <= 1,
-    i.e. those without duplicates'''
+    i.e. those without duplicates. Sorts individual filelists for easier reading'''
     to_delete=set() #Can't operate on the dict as we iterate over it
     for (s, filelist) in search_map.items() :
         if len(filelist) <= 1 :
             to_delete.add(s)
+        else :
+            filelist.sort()
     for n in to_delete :
         del search_map[n]
     return search_map
@@ -102,9 +104,9 @@ def output_duplicates(hashmap, output=sys.stdout, verbose=False) :
 
 def _printer(d, out) :
         for (k, v) in d.items() :
-            print('\n[ ', file=out)
+            print('[ ', file=out, end=" ")
             for f in v : 
-                print(f, file=out)
+                print(f, file=out, end=" ")
             print(']', file=out)
 
 
