@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 import os, hashlib, sys
 import argparse
+from collections import defaultdict
 
+#TODO: Build paths iterator to avoid duplicating for base_path in baes_paths: for (dirpath, dirnames, filenames) in os.walk(base_path) : etc
+#TODO: Refactor main algorithm so functions are more single purpose
 def main():
     parser = _make_parser()
     args = parser.parse_args()
@@ -13,29 +16,49 @@ def main():
 
 def md5hash_dict(base_paths, verbose=False) :
     '''Builds a dict mapping the md5 hash of files in path (recursively searched) to filenames of duplicates'''
-    #TODO: Speed this up massively.  Maybe try using os.stat to build dictionary of files with same size, then compare md5 hashes of files within size classes. Reading input takes a huge % of time, with md5hash not far behind.
     if not _check_paths(base_paths) :
         exit(1)
     if verbose :
+        print("Comparing filesizes to determine candidate duplicates")
+    sizemap = _build_size_dict(base_paths, verbose)
+    if verbose :
         print("Building md5 hashes of files (this may take a while)")
-    hashmap = {}
+    hashmap = defaultdict(list)
+    for (_, filenames) in sizemap.items() :
+        for fullname in filenames :
+            try :
+                with open(fullname, 'rb') as f:
+                    d=f.read()
+                h=hashlib.md5(d).hexdigest()
+                hashmap[h].append(fullname)
+            except OSError:
+                print("Can't open {}".format(os.path.abspath(fullname)))
+                continue
+    return hashmap
+
+
+def _build_size_dict(base_paths, verbose=False) :
+    '''Builds a dictionary mapping {file size in bytes : list of files with that filesize}, ignoring size 0 files, and only returning those that have duplicates'''
+    #NOTE: Assumes paths have already been checked by _check_paths.  In normal operation this has been done in md5hash_dict
+    #TODO: Change above behavior? Probably need to refactor
+    sizemap=defaultdict(list)
     for base_path in base_paths :
         for (dirpath, dirnames, filenames) in os.walk(base_path) :
             if verbose :
-                print("On directory ", dirpath)
+                print("Checking sizes in directory ", dirpath)
             for filename in filenames :
                 fullname = os.path.join(dirpath, filename)
-                try:
-                    with open(fullname, 'rb') as f :
-                        d = f.read()
-                    h = hashlib.md5(d).hexdigest()
-                    filelist = hashmap.setdefault(h, [])
-                    filelist.append(fullname)
-                except OSError:
-                    #TODO: if verbose on this line or not?  Probably better to leave it...
-                    print("Can't open {}".format(os.path.abspath(fullname)))
-                    continue
-    return hashmap
+                #TODO: Figure out how getsize can fail, say, on /dev/sr0 or /dev/null, or symlinks
+                sz = os.path.getsize(fullname)
+                if sz > 0 :
+                    sizemap[sz].append(fullname)
+    to_delete=set()
+    for (n_bytes, filelist) in sizemap.items() :
+        if len(filelist) <= 1 :
+            to_delete.add(n_bytes)
+    for n in to_delete:
+        del sizemap[n]
+    return sizemap
 
 
 def _make_parser() :
