@@ -3,7 +3,7 @@ import os, hashlib, sys
 import argparse
 from collections import defaultdict
 
-#TODO: Refactor main algorithm so functions are more single purpose
+#TODO: Refactor main algorithm (building of maps, filtering sizemap, etc) so functions are more single purpose
 def main():
     parser = _make_parser()
     args = parser.parse_args()
@@ -45,7 +45,6 @@ def _build_size_dict(base_paths, verbose=False) :
         for (dirpath, dirnames, filenames) in os.walk(base_path) :
             for filename in filenames :
                 fullname = os.path.join(dirpath, filename)
-                #TODO: Figure out how getsize can fail, say, on /dev/sr0 or /dev/null, or symlinks
                 try:
                     sz = os.path.getsize(fullname)
                 except OSError:
@@ -59,6 +58,8 @@ def _build_size_dict(base_paths, verbose=False) :
             to_delete.add(n_bytes)
     for n in to_delete:
         del sizemap[n]
+    if verbose :
+        print("Found {} unique filesizes that are duplicate candidates.".format(len(sizemap)))
     return sizemap
 
 
@@ -94,6 +95,7 @@ def _check_paths(paths) :
 
 
 def _check_output(out) :
+    #TODO: This is a mess
     if out is sys.stdout :
         return out
     if os.path.exists(out) :
@@ -103,7 +105,14 @@ def _check_output(out) :
         if answer in "nN" :
             print("Got {}, exiting".format(answer))
             exit(1)
-    f=open(out, 'w')
+    try:
+        f=open(out, 'w')
+    except PermissionError :
+        print("Permission error, couldn't write to {}.  Check that you have write permissions.".format(out))
+        exit(1)
+    except :
+        print("Unknown error in opening {}".format(out))
+        exit(1)
     return f
 
 
