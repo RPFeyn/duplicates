@@ -93,13 +93,19 @@ def _make_parser() :
 
 def output_duplicates(hashmap, output=sys.stdout, verbose=False) :
     '''Simple printer function that takes a dict {search_criteria : [files]}, and prints the files which have duplicates.  If verbose, will print duplicates to both stdout and the output file, if they're different.'''
-    for (k, v) in hashmap.items() :
-        print('Duplicates: ', v, file=output)
-        if not output is sys.stdout and verbose :
-            print('Duplicates: ', v, file=sys.stdout)
+    _printer(hashmap, output)
+    if not output is sys.stdout and verbose :
+        _printer(hashmap, sys.stdout)
     print("\nFound {} unique files with at least 1 duplicate.".format(len(hashmap)))
     if not output is sys.stdout :
-        print("On a unix-like system, it may be helpful to run 'sort {} > some_new_output.txt'".format(output.name))
+        print("It may be helpful to run 'sort {} > some_new_output.txt' ".format(output.name))
+
+def _printer(d, out) :
+        for (k, v) in d.items() :
+            print('\n[ ', file=out)
+            for f in v : 
+                print(f, file=out)
+            print(']', file=out)
 
 
 def _check_paths(paths) :
