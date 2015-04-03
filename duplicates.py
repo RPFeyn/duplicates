@@ -107,11 +107,11 @@ def output_duplicates(hashmap, output=sys.stdout, verbose=False) :
 
 
 def _printer(d, out) :
-        for (k, v) in d.items() :
-            print('[ ', file=out, end=" ")
-            for f in v : 
-                print(f, file=out, end=" ")
-            print(']', file=out)
+    for (k, v) in d.items() :
+        print('[ ', file=out, end=" ")
+        for f in v : 
+            print(f, file=out, end=" ")
+        print(']', file=out)
 
 
 def _check_paths(paths) :
@@ -128,7 +128,7 @@ def _check_paths(paths) :
 
 def _check_output(out) :
     '''Takes out to either be sys.stdout, or a filename of a text file to write to.  Ensures user doesn't accidentally overwrite something they want to keep.  Returns an appropriate output file handle if possible'''
-    #TODO: This is a mess
+    #TODO: Too coupled?
     if out is sys.stdout :
         return out
     if os.path.exists(out) :
@@ -137,7 +137,7 @@ def _check_output(out) :
             answer = input("Please enter y/n:")
         if answer in "nN" :
             print("Got {}, exiting".format(answer))
-            exit(1)
+            exit(0)
     try:
         f=open(out, 'w')
     except PermissionError :
