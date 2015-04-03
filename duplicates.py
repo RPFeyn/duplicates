@@ -5,8 +5,11 @@ from collections import defaultdict
 
 '''Options I'd like to add:
    - Finer control over descending into subdirs, symlinks
-   - Printing options: compact printing (1 set of duplicates per line, useful for sort) vs pretty printing (one file per line, for example
-   - Figure out if we can increase performance -- still slowish on big dirs'''
+   - Printing options: compact printing (1 set of duplicates per line, useful for sort) vs pretty printing (one file per line, for example)
+   - Figure out if we can increase performance -- still slowish on big dirs
+   - Some indication if entire dirs are duplicated?
+   - Maybe abstract function for building dicts to allow easier extension/changes
+   - _check_output() is a mess -- I don't like that I have different ways of handling sys.stdout vs filenames'''
 
 
 def main():
@@ -24,9 +27,6 @@ def find_duplicates(base_paths, verbose=False) :
     return _md5hash_dict(sizemap, verbose)
 
 
-#TODO: Abstract _md5hash_dict and _build_size_dict into one function somehow?  
-#Not obvious how it would be useful now, but would allow for multiple filtering criteria
-#say, uid, gid? inode? os.lstat to not follow symlinks?
 def _md5hash_dict(sizemap, verbose=False) :
     '''Builds a dict mapping the md5 hash of files in path (recursively searched) to filenames of duplicates.
     sizemap is assumed to be a dict mapping { initial_criterion : [list of duplicate candidates] }'''
@@ -128,19 +128,22 @@ def _check_paths(paths) :
         raise OSError("Couldn't open some input directories")
     return paths_ok
 
-
-def _check_output(out) :
-    '''Takes out to either be sys.stdout, or a filename of a text file to write to.  Ensures user doesn't accidentally overwrite something they want to keep.  Returns an appropriate output file handle if possible'''
-    #TODO: Too coupled?
-    if out is sys.stdout :
-        return out
+def _check_for_overwrite(out) :
+    '''Checks if filename out exists, queries user how to proceed'''
     if os.path.exists(out) :
         answer = input("Output file {} exists and will be overwritten: continue? (y/N)".format(out))
         while answer not in "yYnN" :
             answer = input("Please enter y/n:")
-        if answer in "nN" :
-            print("Got {}, exiting".format(answer))
-            sys.exit(0)
+            if answer[0] in "nN" :
+                print("Got {}, exiting".format(answer))
+                sys.exit(0)
+
+
+def _check_output(out) :
+    '''Takes out to either be sys.stdout, or a filename of a text file to write to.  Ensures user doesn't accidentally overwrite something they want to keep.  Returns an appropriate output file handle if possible'''
+    if out is sys.stdout :
+        return out
+    _check_for_overwrite(out)
     try:
         f=open(out, 'w')
     except PermissionError :
