@@ -13,7 +13,7 @@ def main():
     parser = _make_parser()
     args = parser.parse_args()
     output = _check_output(args.output_filename)     #Want to call _check_output() before find_duplicates() because 
-    h=find_duplicates(args.input_dirs, args.verbose) #user can cancel in _check_output() if s/he would overwrite something important
+    h=find_duplicates(args.input_dirs, args.verbose) #user can cancel execution in _check_output() 
     output_duplicates(h, output, args.verbose)
    
 
@@ -24,13 +24,16 @@ def find_duplicates(base_paths, verbose=False) :
     return _md5hash_dict(sizemap, verbose)
 
 
+#TODO: Abstract _md5hash_dict and _build_size_dict into one function somehow?  
+#Not obvious how it would be useful now, but would allow for multiple filtering criteria
+#say, uid, gid? inode? os.lstat to not follow symlinks?
 def _md5hash_dict(sizemap, verbose=False) :
     '''Builds a dict mapping the md5 hash of files in path (recursively searched) to filenames of duplicates.
     sizemap is assumed to be a dict mapping { initial_criterion : [list of duplicate candidates] }'''
     if verbose :
         print("Building md5 hashes of files (this may take a while)")
     hashmap = defaultdict(list)
-    for (_, filenames) in sizemap.items() :
+    for (_, filenames) in sizemap.items() : #Don't care about actual sizes, only which files have == size
         for fullname in filenames :
             try :
                 with open(fullname, 'rb') as f:
@@ -39,7 +42,7 @@ def _md5hash_dict(sizemap, verbose=False) :
                 hashmap[h].append(fullname)
             except OSError:
                 print("Warning: Can't open {}".format(os.path.abspath(fullname)), file=sys.stderr)
-                continue #Just skip files we can't open
+                continue 
     hashmap=_purge(hashmap)
     return hashmap
 
@@ -51,7 +54,7 @@ def _build_size_dict(base_paths, verbose=False) :
         _check_paths(base_paths)
     except OSError:
         print("Error: Bad input directory or directories. Cannot continue.", file=sys.stderr)
-        exit(1)
+        sys.exit(1)
     sizemap=defaultdict(list)
     if verbose :
         print("Creating candidates for duplicates based on filesize")
@@ -67,7 +70,7 @@ def _build_size_dict(base_paths, verbose=False) :
                     continue
                 if sz > 0 :
                     sizemap[sz].append(fullname)
-    sizemap=_purge(sizemap) #Consider inlining _purge so sizemap doesn't have to get passed around
+    sizemap=_purge(sizemap) #Consider inlining _purge so sizemap doesn't have to get passed around: For now, _purge() only used here
     if verbose :
         print("Found {} unique filesizes that are duplicate candidates.".format(len(sizemap)))
     return sizemap
@@ -137,15 +140,15 @@ def _check_output(out) :
             answer = input("Please enter y/n:")
         if answer in "nN" :
             print("Got {}, exiting".format(answer))
-            exit(0)
+            sys.exit(0)
     try:
         f=open(out, 'w')
     except PermissionError :
         print("Error: Couldn't write to {}. Check that you have write permissions.".format(out), file=sys.stderr)
-        exit(1)
+        sys.exit(1)
     except :
         print("Error: Unknown error in opening {}".format(out), file=sys.stderr)
-        exit(1)
+        sys.exit(1)
     return f
 
 
