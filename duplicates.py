@@ -73,7 +73,7 @@ def build_size_dict(base_paths, verbose=False, follow_links=True) :
                     continue
                 if sz > 0 :
                     sizemap[sz].append(fullname)
-    sizemap=purge_uniques(sizemap) #Consider inlining purge_uniques so sizemap doesn't have to get passed around: For now, purge_uniques() only used here
+    sizemap=sort_filesnames(purge_uniques(sizemap)) 
     if verbose :
         print("Found {} unique filesizes that are duplicate candidates.".format(len(sizemap)))
     return sizemap
