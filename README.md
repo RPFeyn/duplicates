@@ -5,8 +5,8 @@ It is very much a work in progress.
 usage: duplicates.py [-h] [-o [OUTPUT_FILENAME]] [-v] [-L]
                      input_dirs [input_dirs ...]
 
-Searches directory and its subdirectories for files with duplicate contents,
-optionally writing out duplicates to either a text file or stdout
+Searches input_dirs and their subdirectories for files with duplicate contents,
+optionally writing out duplicates to either a text file or stdout.
 
 positional arguments:
   input_dirs            Input directories to be search, separated by
